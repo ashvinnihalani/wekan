@@ -118,8 +118,6 @@ ENV BUILD_DEPS="apt-utils libarchive-tools gnupg gosu wget curl bzip2 g++ build-
     SCROLLAMOUNT="auto" \
     PASSWORD_LOGIN_ENABLED=true
 
-# Copy the app to the image
-COPY ${SRC_PATH} /home/wekan/app
 
 RUN \
     set -o xtrace && \
@@ -191,11 +189,12 @@ RUN \
     #paxctl -mC `which node` && \
     \
     # Install Node dependencies. Python path for node-gyp.
-    npm install -g npm@${NPM_VERSION} && \
+    npm install -g npm@${NPM_VERSION}
     #npm config set python python2.7 && \
     #npm install -g node-gyp && \
     #npm install -g fibers@${FIBERS_VERSION} && \
-    \
+
+RUN \
     # Change user to wekan and install meteor
     cd /home/wekan/ && \
     chown wekan --recursive /home/wekan && \
@@ -207,8 +206,7 @@ RUN \
     echo "Starting meteor ${METEOR_RELEASE} installation...   \n" && \
     gosu wekan:wekan curl https://install.meteor.com/ | /bin/sh && \
     mv /root/.meteor /home/wekan/ && \
-    chown wekan --recursive /home/wekan/.meteor && \
-    \
+    chown wekan --recursive /home/wekan/.meteor
     # Check if opting for a release candidate instead of major release
     #if [ "$USE_EDGE" = false ]; then \
       #gosu wekan:wekan sh /home/wekan/install_meteor.sh; \
@@ -232,10 +230,11 @@ RUN \
     #gosu wekan:wekan mv meteor-accounts-oidc/packages/switch_accounts-oidc wekan-accounts-oidc && \
     #gosu wekan:wekan mv meteor-accounts-oidc/packages/switch_oidc wekan-oidc && \
     #gosu wekan:wekan rm -rf meteor-accounts-oidc && \
+COPY ${SRC_PATH} /home/wekan/app
+RUN chown wekan --recursive /home/wekan && \
     sed -i 's/api\.versionsFrom/\/\/api.versionsFrom/' /home/wekan/app/packages/meteor-useraccounts-core/package.js && \
     cd /home/wekan/.meteor && \
-    gosu wekan:wekan /home/wekan/.meteor/meteor -- help; \
-    \
+    gosu wekan:wekan /home/wekan/.meteor/meteor -- help;
     # extract the OpenAPI specification
     #npm install -g api2html@0.3.3 && \
     #mkdir -p /home/wekan/python && \
@@ -249,8 +248,9 @@ RUN \
     #chown wekan --recursive /home/wekan/app && \
     #gosu wekan:wekan python3 ./openapi/generate_openapi.py --release $(git describe --tags --abbrev=0) > ./public/api/wekan.yml && \
     #gosu wekan:wekan /opt/nodejs/bin/api2html -c ./public/logo-header.png -o ./public/api/wekan.html ./public/api/wekan.yml; \
+
     # Build app
-    cd /home/wekan/app && \
+RUN cd /home/wekan/app && \
     mkdir -p /home/wekan/.npm && \
     chown wekan --recursive /home/wekan/.npm /home/wekan/.config /home/wekan/.meteor && \
     #gosu wekan:wekan /home/wekan/.meteor/meteor add standard-minifier-js && \
